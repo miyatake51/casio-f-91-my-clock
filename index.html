@@ -2,440 +2,327 @@
 <html lang="ja">
 <head>
   <link rel="apple-touch-icon" href="icon.png">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CASIO F-91W</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DSEG7+Classic:ital,wght@0,100;0,300;0,400;0,700;1,100;1,300;1,400;1,700&display=swap" rel="stylesheet">
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CASIO F-91W - Clock.exe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&family=DSEG7+Classic:ital,wght@0,100;0,300;0,400;0,700;1,100;1,300;1,400;1,700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #008080; /* Teal desktop */
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'DotGothic16', sans-serif;
+    }
 
-  body {
-    background: #1a1a1a;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    font-family: sans-serif;
-  }
+    /* Window Container */
+    .window {
+      width: calc(100% - 24px);
+      max-width: 360px;
+      background: #C0C0C0;
+      border: 2px solid #000;
+      box-shadow: 4px 4px 0 #000; /* Original sharp corner, black hard shadow */
+      display: flex;
+      flex-direction: column;
+    }
 
-  .watch-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0;
-  }
+    /* Title Bar */
+    .title-bar {
+      background: #0000A8; /* Navy */
+      color: #fff;
+      padding: 4px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #000;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .title-bar-text {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .title-bar-icon {
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border: 1px solid #000;
+      display: inline-block;
+      box-shadow: inset 1px 1px 0 rgba(0,0,0,0.5);
+    }
 
-  /* ストラップ上 */
-  .strap {
-    width: 110px;
-    background: linear-gradient(to bottom, #111, #222, #111);
-    border-radius: 6px 6px 0 0;
-    position: relative;
-  }
-  .strap.top {
-    height: 80px;
-    border-radius: 8px 8px 0 0;
-    box-shadow: inset 2px 0 4px rgba(0,0,0,0.5), inset -2px 0 4px rgba(0,0,0,0.5);
-  }
-  .strap.bottom {
-    height: 100px;
-    border-radius: 0 0 8px 8px;
-    box-shadow: inset 2px 0 4px rgba(0,0,0,0.5), inset -2px 0 4px rgba(0,0,0,0.5);
-  }
-  .strap::before {
-    content: '';
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 4px;
-    background: #333;
-  }
-  .strap.top::before { top: 10px; height: 60px; }
-  .strap.bottom::before { top: 10px; height: 70px; }
+    .btn-close {
+      background: #C0C0C0;
+      border: 2px solid #000;
+      box-shadow: 1px 1px 0 #000;
+      color: #000;
+      font-family: 'DotGothic16', sans-serif;
+      font-weight: bold;
+      cursor: pointer;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      line-height: 1;
+    }
+    .btn-close:active {
+      box-shadow: inset 1px 1px 0 #000;
+      transform: translate(1px, 1px);
+    }
 
-  /* ストラップの穴 */
-  .strap-holes {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    top: 20px;
-  }
-  .hole {
-    width: 6px;
-    height: 6px;
-    background: #0a0a0a;
-    border-radius: 50%;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.8);
-  }
+    /* Window Content */
+    .window-content {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
 
-  /* 本体 */
-  .watch-body {
-    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 40%, #222 100%);
-    width: 200px;
-    padding: 14px;
-    position: relative;
-    clip-path: polygon(12px 0%, calc(100% - 12px) 0%, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0% calc(100% - 12px), 0% 12px);
-    box-shadow:
-      0 8px 32px rgba(0,0,0,0.8),
-      inset 0 1px 0 rgba(255,255,255,0.05),
-      inset 0 -1px 0 rgba(0,0,0,0.5);
-  }
+    /* LCD Screen */
+    .lcd {
+      background: #8fa882;
+      border: 2px solid #000;
+      box-shadow: inset 4px 4px 0 rgba(0,0,0,0.3);
+      padding: 12px;
+      position: relative;
+    }
+    .lcd.light-on {
+      background: #c8e87a;
+    }
 
-  /* サイドボタン */
-  .btn-left, .btn-right {
-    position: absolute;
-    background: linear-gradient(to right, #3a3a3a, #555, #3a3a3a);
-    border: none;
-    cursor: pointer;
-    border-radius: 4px;
-    box-shadow: 2px 0 4px rgba(0,0,0,0.5);
-    transition: transform 0.1s, box-shadow 0.1s;
-  }
-  .btn-left:active, .btn-right:active {
-    transform: scaleX(0.9);
-    box-shadow: 1px 0 2px rgba(0,0,0,0.5);
-  }
+    /* Brand Header inside LCD */
+    .lcd-brand {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 2px dashed rgba(0,0,0,0.2);
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+    }
+    .brand-casio {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 8px;
+      color: #000;
+    }
+    .brand-model {
+      font-family: 'DotGothic16', sans-serif;
+      font-size: 12px;
+      font-weight: bold;
+      color: #000;
+    }
 
-  .btn-left {
-    left: -16px;
-    width: 18px;
-    height: 32px;
-  }
-  .btn-right {
-    right: -16px;
-    width: 18px;
-    height: 32px;
-    background: linear-gradient(to left, #3a3a3a, #555, #3a3a3a);
-  }
+    /* LCD Layout */
+    .lcd-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      height: 24px;
+      margin-bottom: 4px;
+    }
 
-  .btn-light  { top: 24px; }
-  .btn-mode   { top: 64px; }
-  .btn-start  { top: 24px; }
-  .btn-lap    { top: 64px; }
+    .lcd-indicator {
+      font-size: 10px;
+      color: #3a4a35;
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+      font-weight: bold;
+    }
 
-  /* サイドラベル */
-  .side-label {
-    position: absolute;
-    font-size: 5px;
-    color: #c8a84b;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-  .label-light { left: 4px; top: 22px; writing-mode: vertical-rl; transform: rotate(180deg); }
-  .label-mode  { left: 4px; top: 52px; writing-mode: vertical-rl; transform: rotate(180deg); }
-  .label-alarm { right: 4px; top: 22px; writing-mode: vertical-rl; }
+    .lcd-day-date {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
 
-  /* LCD外枠 */
-  .lcd-frame {
-    background: #0d0d0d;
-    border-radius: 6px;
-    padding: 6px;
-    box-shadow:
-      inset 0 2px 6px rgba(0,0,0,0.9),
-      inset 0 -1px 2px rgba(255,255,255,0.03);
-  }
+    .day-label {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 8px;
+      color: #000;
+    }
 
-  /* LCD本体 */
-  .lcd {
-    background: #8fa882;
-    border-radius: 4px;
-    padding: 8px 10px 6px;
-    position: relative;
-    transition: background 0.3s, box-shadow 0.3s;
-    min-height: 100px;
-    box-shadow:
-      inset 0 1px 3px rgba(0,0,0,0.3),
-      inset 0 -1px 1px rgba(255,255,255,0.1);
-  }
+    .seg-small {
+      font-family: 'DSEG7 Classic', monospace;
+      font-size: 16px;
+      color: #1a2a15;
+    }
 
-  .lcd.light-on {
-    background: #c8e87a;
-    box-shadow:
-      inset 0 1px 3px rgba(0,0,0,0.2),
-      0 0 20px rgba(180,240,80,0.6),
-      0 0 40px rgba(180,240,80,0.3);
-  }
+    .lap-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    .lap-label {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 6px;
+      color: #000;
+      margin-bottom: 2px;
+    }
 
-  /* LCD上部：ブランド名 */
-  .lcd-brand {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 4px;
-  }
-  .brand-casio {
-    font-size: 9px;
-    font-weight: 700;
-    color: #c8a84b;
-    letter-spacing: 1.5px;
-    text-shadow: 0 1px 1px rgba(0,0,0,0.2);
-  }
-  .brand-model {
-    font-size: 7px;
-    font-weight: 600;
-    color: #c8a84b;
-    letter-spacing: 1px;
-  }
+    .lcd-main {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 2px;
+      padding-top: 4px;
+    }
 
-  /* LCD上段（日付・曜日） */
-  .lcd-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2px;
-    height: 22px;
-  }
+    .seg-large {
+      font-family: 'DSEG7 Classic', monospace;
+      font-size: 48px;
+      color: #1a2a15;
+      line-height: 1;
+    }
 
-  .lcd-indicator {
-    font-size: 6px;
-    color: #3a4a35;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    line-height: 1;
-  }
-  .indicator-active {
-    color: #1a2a15;
-    font-weight: bold;
-  }
+    .seg-colon {
+      font-family: 'DSEG7 Classic', monospace;
+      font-size: 40px;
+      color: #1a2a15;
+      line-height: 1;
+      animation: blink 1s step-end infinite;
+      position: relative;
+      top: -4px;
+    }
 
-  .lcd-day-date {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-  }
+    .seg-seconds {
+      font-family: 'DSEG7 Classic', monospace;
+      font-size: 24px;
+      color: #1a2a15;
+      margin-left: 4px;
+    }
 
-  .seg-small {
-    font-family: 'DSEG7 Classic', monospace;
-    font-size: 14px;
-    color: #2a3a25;
-    text-shadow: 0 0 1px rgba(42,58,37,0.3);
-    letter-spacing: 1px;
-  }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .blink { animation: blink 0.8s step-end infinite; }
 
-  .day-label {
-    font-size: 7px;
-    color: #3a4a35;
-    letter-spacing: 1px;
-    font-weight: bold;
-    align-self: flex-end;
-    margin-bottom: 2px;
-  }
+    .mode-label {
+      text-align: center;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 8px;
+      color: #000;
+      margin-top: 12px;
+      height: 8px;
+    }
 
-  .lap-label {
-    font-size: 6px;
-    color: #3a4a35;
-    letter-spacing: 0.5px;
-  }
+    .alarm-indicator {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 8px;
+      color: #1a2a15;
+      display: none;
+    }
+    .alarm-indicator.active { display: block; }
 
-  /* LCD メイン時刻 */
-  .lcd-main {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
-  }
-
-  .seg-large {
-    font-family: 'DSEG7 Classic', monospace;
-    font-size: 42px;
-    color: #1a2a15;
-    line-height: 1;
-    text-shadow: 0 0 2px rgba(26,42,21,0.4);
-    letter-spacing: 2px;
-  }
-
-  .seg-colon {
-    font-family: 'DSEG7 Classic', monospace;
-    font-size: 36px;
-    color: #1a2a15;
-    line-height: 1;
-    margin: 0 -2px;
-    animation: blink 1s step-end infinite;
-  }
-
-  .seg-seconds {
-    font-family: 'DSEG7 Classic', monospace;
-    font-size: 22px;
-    color: #1a2a15;
-    align-self: flex-end;
-    margin-bottom: 4px;
-    margin-left: 2px;
-  }
-
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.2; }
-  }
-
-  /* WRバッジ */
-  .wr-badge {
-    display: flex;
-    justify-content: center;
-    margin-top: 4px;
-  }
-  .wr-badge span {
-    border: 1.5px solid #c8a84b;
-    border-radius: 10px;
-    padding: 1px 8px;
-    font-size: 7px;
-    color: #c8a84b;
-    letter-spacing: 1px;
-    font-weight: bold;
-  }
-
-  /* モード表示 */
-  .mode-label {
-    text-align: center;
-    font-size: 7px;
-    color: #3a4a35;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-top: 2px;
-    height: 10px;
-  }
-
-  /* アラームセット画面 */
-  .alarm-set-display {
-    display: none;
-    text-align: center;
-  }
-  .alarm-set-display.active { display: block; }
-
-  /* アラーム鳴動インジケーター */
-  .alarm-indicator {
-    position: absolute;
-    top: 6px;
-    right: 10px;
-    font-size: 6px;
-    color: #1a2a15;
-    display: none;
-  }
-  .alarm-indicator.active { display: block; }
-
-  /* アニメーション：点滅（アラームセット中） */
-  .blink { animation: blink 0.8s step-end infinite; }
-
-  /* ストップウォッチのLAP表示 */
-  .lap-display {
-    font-size: 8px;
-    color: #2a3a25;
-    text-align: right;
-    height: 10px;
-  }
-</style>
+    /* Button Controls */
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .btn {
+      border: 2px solid #000;
+      background: #C0C0C0;
+      padding: 8px;
+      cursor: pointer;
+      box-shadow: 2px 2px 0 #000;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 10px;
+      color: #000;
+      text-align: center;
+      user-select: none;
+    }
+    .btn:active {
+      box-shadow: inset 2px 2px 0 rgba(0,0,0,0.5);
+      transform: translate(2px, 2px);
+    }
+  </style>
 </head>
 <body>
 
-<div class="watch-container">
-  <!-- ストラップ上 -->
-  <div class="strap top">
-    <div class="strap-holes">
-      <div class="hole"></div>
-      <div class="hole"></div>
-      <div class="hole"></div>
+<div class="window">
+  <!-- Title Bar -->
+  <div class="title-bar">
+    <div class="title-bar-text">
+      <div class="title-bar-icon"></div>
+      CASIO F-91W - Clock.exe
     </div>
+    <button class="btn-close">X</button>
   </div>
 
-  <!-- 本体 -->
-  <div class="watch-body">
-    <!-- ボタン左 -->
-    <button class="btn-left btn-light" onclick="pressLight()" title="LIGHT"></button>
-    <button class="btn-left btn-mode" onclick="pressMode()" title="MODE"></button>
-    <!-- ボタン右 -->
-    <button class="btn-right btn-start" onclick="pressStart()" title="START/STOP"></button>
-    <button class="btn-right btn-lap" onclick="pressLap()" title="LAP/RESET"></button>
-
-    <!-- サイドラベル -->
-    <span class="side-label label-light">LIGHT</span>
-    <span class="side-label label-mode">MODE</span>
-    <span class="side-label label-alarm">ALARM ON/OFF</span>
-
-    <!-- LCD -->
-    <div class="lcd-frame">
-      <div class="lcd" id="lcd">
-        <!-- ブランド -->
-        <div class="lcd-brand">
-          <span class="brand-casio">CASIO</span>
-          <span class="brand-model">F-91W</span>
-        </div>
-
-        <!-- 上段 -->
-        <div class="lcd-top">
-          <div class="lcd-indicator">
-            <span id="ind-pm">PM</span>
-            <span style="font-size:5px;color:#3a4a35;">24H</span>
-          </div>
-          <div class="lcd-day-date">
-            <span class="day-label" id="day-label">MON</span>
-            <span class="seg-small" id="date-display">20</span>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
-            <span class="lap-label" id="lap-label"></span>
-            <span class="seg-small" id="top-right">00</span>
-          </div>
-        </div>
-
-        <!-- メイン表示 -->
-        <div class="lcd-main" id="main-display">
-          <span class="seg-large" id="main-h">12</span>
-          <span class="seg-colon" id="colon">:</span>
-          <span class="seg-large" id="main-m">00</span>
-          <span class="seg-seconds" id="main-s">00</span>
-        </div>
-
-        <!-- モードラベル -->
-        <div class="mode-label" id="mode-label"></div>
-
-        <!-- アラームインジケーター -->
-        <div class="alarm-indicator" id="alarm-ind">ALM</div>
-
-        <!-- WRバッジ -->
-        <div class="wr-badge"><span>WR</span></div>
+  <!-- Content -->
+  <div class="window-content">
+    
+    <!-- LCD Screen -->
+    <div class="lcd" id="lcd">
+      <div class="lcd-brand">
+        <span class="brand-casio">CASIO</span>
+        <span class="brand-model">F-91W</span>
       </div>
-    </div>
-  </div>
 
-  <!-- ストラップ下 -->
-  <div class="strap bottom">
-    <div class="strap-holes" style="top:15px;">
-      <div class="hole"></div>
-      <div class="hole"></div>
-      <div class="hole"></div>
-      <div class="hole"></div>
+      <div class="lcd-top">
+        <div class="lcd-indicator">
+          <span id="ind-pm">PM</span>
+          <span style="font-size:8px;">24H</span>
+        </div>
+        <div class="lcd-day-date">
+          <span class="day-label" id="day-label">MON</span>
+          <span class="seg-small" id="date-display">20</span>
+        </div>
+        <div class="lap-group">
+          <span class="lap-label" id="lap-label">MO</span>
+          <span class="seg-small" id="top-right">00</span>
+        </div>
+      </div>
+
+      <div class="lcd-main" id="main-display">
+        <span class="seg-large" id="main-h">12</span>
+        <span class="seg-colon" id="colon">:</span>
+        <span class="seg-large" id="main-m">00</span>
+        <span class="seg-seconds" id="main-s">00</span>
+      </div>
+
+      <div class="mode-label" id="mode-label"></div>
+      <div class="alarm-indicator" id="alarm-ind">ALM</div>
     </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button class="btn" onclick="pressLight()">LIGHT</button>
+      <button class="btn" onclick="pressStart()">START/STOP</button>
+      <button class="btn" onclick="pressMode()">MODE</button>
+      <button class="btn" onclick="pressLap()">LAP/RESET</button>
+    </div>
+
   </div>
 </div>
 
 <script>
-// ===== 状態管理 =====
 const MODES = ['TIME', 'STOPWATCH', 'ALARM'];
 let currentMode = 0;
 
-// 時刻
 let lightTimer = null;
 
-// ストップウォッチ
 let swRunning = false;
 let swStartTime = 0;
 let swElapsed = 0;
 let swLapTime = null;
 let swInterval = null;
 
-// アラーム
 let alarmEnabled = false;
 let alarmHour = 7;
 let alarmMinute = 0;
 let alarmEditing = 0; // 0=hour, 1=minute
 let alarmFired = false;
-let alarmSound = null;
 
-// ===== 要素取得 =====
 const lcd       = document.getElementById('lcd');
 const mainH     = document.getElementById('main-h');
 const mainM     = document.getElementById('main-m');
@@ -453,7 +340,6 @@ const DAYS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
 
 function pad(n, w=2) { return String(n).padStart(w, '0'); }
 
-// ===== 時刻表示 =====
 function updateTime() {
   const now = new Date();
   let h = now.getHours();
@@ -472,7 +358,6 @@ function updateTime() {
   mainM.textContent = pad(m);
   mainS.textContent = pad(s);
 
-  // アラームチェック
   if (alarmEnabled && !alarmFired) {
     if (h === alarmHour && m === alarmMinute && s === 0) {
       triggerAlarm();
@@ -483,7 +368,6 @@ function updateTime() {
   }
 }
 
-// ===== ストップウォッチ表示 =====
 function updateStopwatch() {
   const elapsed = swRunning ? swElapsed + (Date.now() - swStartTime) : swElapsed;
   const displayTime = swLapTime !== null ? swLapTime : elapsed;
@@ -500,7 +384,6 @@ function updateStopwatch() {
   lapLabel.textContent = swLapTime !== null ? 'LAP' : '';
 }
 
-// ===== アラーム表示 =====
 function updateAlarmDisplay() {
   const h12 = alarmHour % 12 || 12;
   const isPm = alarmHour >= 12;
@@ -515,7 +398,6 @@ function updateAlarmDisplay() {
   mainM.textContent = pad(alarmMinute);
   mainS.textContent = alarmEnabled ? 'ON' : 'OF';
 
-  // 編集中の点滅
   if (alarmEditing === 0) {
     mainH.classList.add('blink');
     mainM.classList.remove('blink');
@@ -525,16 +407,13 @@ function updateAlarmDisplay() {
   }
 }
 
-// ===== ライトボタン =====
 function pressLight() {
   lcd.classList.add('light-on');
   if (lightTimer) clearTimeout(lightTimer);
   lightTimer = setTimeout(() => lcd.classList.remove('light-on'), 2000);
 }
 
-// ===== モードボタン =====
 function pressMode() {
-  // アラーム編集中は抜ける
   if (currentMode === 2) {
     mainH.classList.remove('blink');
     mainM.classList.remove('blink');
@@ -550,7 +429,7 @@ function pressMode() {
     swLapTime = null;
     swElapsed = 0;
     alarmInd.className = 'alarm-indicator' + (alarmEnabled ? ' active' : '');
-    lapLabel.textContent = '';
+    lapLabel.textContent = 'MO';
   } else if (currentMode === 1) {
     modeLabel.textContent = 'STOPWATCH';
     colon.style.animation = 'none';
@@ -558,17 +437,17 @@ function pressMode() {
     alarmInd.className = 'alarm-indicator' + (alarmEnabled ? ' active' : '');
     topRight.textContent = '00';
     lapLabel.textContent = '';
+    updateStopwatch();
   } else if (currentMode === 2) {
     modeLabel.textContent = 'ALARM SET';
     colon.style.animation = 'none';
     colon.style.opacity = '1';
+    updateAlarmDisplay();
   }
 }
 
-// ===== STARTボタン（右上） =====
 function pressStart() {
   if (currentMode === 1) {
-    // ストップウォッチ START/STOP
     if (swRunning) {
       swElapsed += Date.now() - swStartTime;
       swRunning = false;
@@ -580,21 +459,17 @@ function pressStart() {
       swInterval = setInterval(updateStopwatch, 50);
     }
   } else if (currentMode === 2) {
-    // アラームSET：時/分を切り替え
     alarmEditing = alarmEditing === 0 ? 1 : 0;
     updateAlarmDisplay();
   }
 }
 
-// ===== LAPボタン（右下） =====
 function pressLap() {
   if (currentMode === 1) {
     if (swRunning) {
-      // LAP
       const elapsed = swElapsed + (Date.now() - swStartTime);
       swLapTime = elapsed;
     } else {
-      // RESET
       swElapsed = 0;
       swLapTime = null;
       swStartTime = 0;
@@ -603,7 +478,6 @@ function pressLap() {
       mainS.textContent = '00';
     }
   } else if (currentMode === 2) {
-    // アラームSET：値を+1
     if (alarmEditing === 0) {
       alarmHour = (alarmHour + 1) % 24;
     } else {
@@ -611,7 +485,6 @@ function pressLap() {
     }
     updateAlarmDisplay();
   } else if (currentMode === 0) {
-    // TIME mode: アラームON/OFF トグル
     alarmEnabled = !alarmEnabled;
     alarmInd.className = 'alarm-indicator' + (alarmEnabled ? ' active' : '');
   }
@@ -625,10 +498,8 @@ function stopStopwatch() {
   clearInterval(swInterval);
 }
 
-// ===== アラーム =====
 function triggerAlarm() {
   alarmFired = true;
-  // Web Audio APIでビープ音
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
   let count = 0;
   function beep() {
@@ -647,7 +518,6 @@ function triggerAlarm() {
     setTimeout(beep, 300);
   }
   beep();
-  // LCD点滅
   let blinks = 0;
   const blinkInterval = setInterval(() => {
     lcd.classList.toggle('light-on');
@@ -658,7 +528,6 @@ function triggerAlarm() {
   }, 150);
 }
 
-// ===== メインループ =====
 function tick() {
   if (currentMode === 0) {
     updateTime();
@@ -668,7 +537,7 @@ function tick() {
 }
 
 setInterval(tick, 1000);
-updateTime(); // 初回即表示
+updateTime();
 </script>
 </body>
 </html>

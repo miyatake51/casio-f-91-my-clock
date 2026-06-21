@@ -471,6 +471,10 @@ function endLapPress() {
     clearTimeout(lapPressTimer);
     lapPressTimer = null;
   }
+  // 長押し判定用フラグを、clickイベント(pressLap)が消化される十分な時間である100ms後に安全にクリアする
+  setTimeout(() => {
+    lapLongPressActive = false;
+  }, 100);
 }
 
 function updateTimerDisplay() {
@@ -518,7 +522,9 @@ function stopTimer() {
     clearInterval(tmrInterval);
     tmrInterval = null;
   }
-  updateTimerDisplay();
+  if (currentMode === 4) {
+    updateTimerDisplay();
+  }
 }
 
 function updateTimerTick() {

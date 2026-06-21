@@ -547,7 +547,7 @@ function updateTimerTick() {
 function pressLight() {
   lcd.classList.add('light-on');
   if (lightTimer) clearTimeout(lightTimer);
-  lightTimer = setTimeout(() => lcd.classList.remove('light-on'), 2000);
+  lightTimer = setTimeout(() => lcd.classList.remove('light-on'), 5000);
 }
 
 function pressMode() {

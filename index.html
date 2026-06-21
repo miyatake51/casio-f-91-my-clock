@@ -306,8 +306,17 @@
 </div>
 
 <script>
-const MODES = ['TIME', 'STOPWATCH', 'ALARM'];
+const MODES = ['TIME', 'STOPWATCH', 'ALARM', 'WORLD TIME'];
 let currentMode = 0;
+
+const CITIES = [
+  { code: 'TYO', offset: 9 },
+  { code: 'NYC', offset: -5 },
+  { code: 'LON', offset: 0 },
+  { code: 'PAR', offset: 1 },
+  { code: 'SYD', offset: 10 }
+];
+let currentCityIndex = 0;
 
 let lightTimer = null;
 
@@ -357,9 +366,11 @@ function updateTime() {
   mainH.textContent = pad(h12);
   mainM.textContent = pad(m);
   mainS.textContent = pad(s);
+}
 
+function checkAlarmTrigger(h, m) {
   if (alarmEnabled && !alarmFired) {
-    if (h === alarmHour && m === alarmMinute && s === 0) {
+    if (h === alarmHour && m === alarmMinute) {
       triggerAlarm();
     }
   }
@@ -529,6 +540,9 @@ function triggerAlarm() {
 }
 
 function tick() {
+  const now = new Date();
+  checkAlarmTrigger(now.getHours(), now.getMinutes());
+
   if (currentMode === 0) {
     updateTime();
   } else if (currentMode === 2) {

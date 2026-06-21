@@ -418,6 +418,28 @@ function updateAlarmDisplay() {
   }
 }
 
+function updateWorldTimeDisplay() {
+  const now = new Date();
+  const city = CITIES[currentCityIndex];
+  const localDate = new Date(now.getTime() + (3600000 * city.offset));
+
+  let h = localDate.getUTCHours();
+  const m = localDate.getUTCMinutes();
+  const s = localDate.getUTCSeconds();
+  const isPm = h >= 12;
+  const h12 = h % 12 || 12;
+
+  indPm.style.color = isPm ? '#1a2a15' : '#8a9a85';
+  dayLabel.textContent = city.code;
+  datedisp.textContent = pad(localDate.getUTCDate());
+  topRight.textContent = pad(localDate.getUTCMonth() + 1);
+  lapLabel.textContent = '';
+
+  mainH.textContent = pad(h12);
+  mainM.textContent = pad(m);
+  mainS.textContent = pad(s);
+}
+
 function pressLight() {
   lcd.classList.add('light-on');
   if (lightTimer) clearTimeout(lightTimer);
@@ -454,6 +476,10 @@ function pressMode() {
     colon.style.animation = 'none';
     colon.style.opacity = '1';
     updateAlarmDisplay();
+  } else if (currentMode === 3) {
+    modeLabel.textContent = 'WORLD TIME';
+    colon.style.animation = 'blink 1s step-end infinite';
+    updateWorldTimeDisplay();
   }
 }
 
@@ -472,6 +498,9 @@ function pressStart() {
   } else if (currentMode === 2) {
     alarmEditing = alarmEditing === 0 ? 1 : 0;
     updateAlarmDisplay();
+  } else if (currentMode === 3) {
+    currentCityIndex = (currentCityIndex + 1) % CITIES.length;
+    updateWorldTimeDisplay();
   }
 }
 
@@ -498,6 +527,9 @@ function pressLap() {
   } else if (currentMode === 0) {
     alarmEnabled = !alarmEnabled;
     alarmInd.className = 'alarm-indicator' + (alarmEnabled ? ' active' : '');
+  } else if (currentMode === 3) {
+    currentCityIndex = (currentCityIndex - 1 + CITIES.length) % CITIES.length;
+    updateWorldTimeDisplay();
   }
 }
 
@@ -547,6 +579,8 @@ function tick() {
     updateTime();
   } else if (currentMode === 2) {
     updateAlarmDisplay();
+  } else if (currentMode === 3) {
+    updateWorldTimeDisplay();
   }
 }
 

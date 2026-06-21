@@ -299,14 +299,14 @@
       <button class="btn" onclick="pressLight()">LIGHT</button>
       <button class="btn" onclick="pressStart()">START/STOP</button>
       <button class="btn" onclick="pressMode()">MODE</button>
-      <button class="btn" onclick="pressLap()">LAP/RESET</button>
+      <button class="btn" onclick="pressLap()" onmousedown="startLapPress()" onmouseup="endLapPress()" ontouchstart="startLapPress()" ontouchend="endLapPress()">LAP/RESET</button>
     </div>
 
   </div>
 </div>
 
 <script>
-const MODES = ['TIME', 'STOPWATCH', 'ALARM', 'WORLD TIME'];
+const MODES = ['TIME', 'STOPWATCH', 'ALARM', 'WORLD TIME', 'TIMER'];
 let currentMode = 0;
 
 const CITIES = [
@@ -317,6 +317,18 @@ const CITIES = [
   { code: 'SYD', offset: 10 }
 ];
 let currentCityIndex = 0;
+
+let tmrSetMin = 5;
+let tmrSetSec = 0;
+let tmrTimeLeft = 300000;
+let tmrRunning = false;
+let tmrStartTime = 0;
+let tmrTimeLeftWhenStarted = 0;
+let tmrInterval = null;
+let tmrSetting = false;
+let tmrSettingField = 0; // 0: 分, 1: 秒
+let lapPressTimer = null;
+let lapLongPressActive = false;
 
 let lightTimer = null;
 
@@ -440,6 +452,9 @@ function updateWorldTimeDisplay() {
   mainS.textContent = pad(s);
 }
 
+function startLapPress() {}
+function endLapPress() {}
+
 function pressLight() {
   lcd.classList.add('light-on');
   if (lightTimer) clearTimeout(lightTimer);
@@ -480,6 +495,8 @@ function pressMode() {
     modeLabel.textContent = 'WORLD TIME';
     colon.style.animation = 'blink 1s step-end infinite';
     updateWorldTimeDisplay();
+  } else if (currentMode === 4) {
+    modeLabel.textContent = 'TIMER';
   }
 }
 
@@ -581,6 +598,8 @@ function tick() {
     updateAlarmDisplay();
   } else if (currentMode === 3) {
     updateWorldTimeDisplay();
+  } else if (currentMode === 4) {
+    // 暫定プレースホルダー
   }
 }
 

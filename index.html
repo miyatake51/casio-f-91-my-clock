@@ -452,8 +452,89 @@ function updateWorldTimeDisplay() {
   mainS.textContent = pad(s);
 }
 
-function startLapPress() {}
-function endLapPress() {}
+function startLapPress() {
+  if (currentMode === 4 && !tmrRunning && !tmrSetting) {
+    if (lapPressTimer) return; // 二重登録によるリーク防止
+    lapLongPressActive = false;
+    lapPressTimer = setTimeout(() => {
+      lapLongPressActive = true;
+      tmrSetting = true;
+      tmrSettingField = 0; // 分
+      updateTimerDisplay();
+    }, 1000);
+  }
+}
+
+function endLapPress() {
+  if (lapPressTimer) {
+    clearTimeout(lapPressTimer);
+    lapPressTimer = null;
+  }
+}
+
+function updateTimerDisplay() {
+  modeLabel.textContent = 'TIMER';
+  dayLabel.textContent = 'TMR';
+  lapLabel.textContent = '';
+  topRight.textContent = '';
+  datedisp.textContent = '';
+
+  if (tmrSetting) {
+    if (tmrSettingField === 0) {
+      mainH.classList.add('blink');
+      mainM.classList.remove('blink');
+    } else {
+      mainH.classList.remove('blink');
+      mainM.classList.add('blink');
+    }
+  } else {
+    mainH.classList.remove('blink');
+    mainM.classList.remove('blink');
+  }
+
+  const totalMs = Math.max(0, tmrTimeLeft);
+  const min = Math.floor(totalMs / 60000);
+  const sec = Math.floor((totalMs % 60000) / 1000);
+  const ms = Math.floor((totalMs % 1000) / 10);
+
+  mainH.textContent = pad(min);
+  mainM.textContent = pad(sec);
+  mainS.textContent = pad(ms);
+}
+
+function startTimer() {
+  tmrRunning = true;
+  tmrStartTime = Date.now();
+  tmrTimeLeftWhenStarted = tmrTimeLeft;
+  if (tmrInterval) clearInterval(tmrInterval);
+  tmrInterval = setInterval(updateTimerTick, 20);
+}
+
+function stopTimer() {
+  tmrRunning = false;
+  tmrTimeLeft = Math.max(0, tmrTimeLeftWhenStarted - (Date.now() - tmrStartTime));
+  if (tmrInterval) {
+    clearInterval(tmrInterval);
+    tmrInterval = null;
+  }
+}
+
+function updateTimerTick() {
+  const elapsed = Date.now() - tmrStartTime;
+  const timeLeft = tmrTimeLeftWhenStarted - elapsed;
+
+  if (timeLeft <= 0) {
+    stopTimer();
+    tmrTimeLeft = 0;
+    triggerAlarm();
+  } else {
+    tmrTimeLeft = timeLeft;
+  }
+
+  if (currentMode === 4) {
+    updateTimerDisplay();
+  }
+}
 
 function pressLight() {
   lcd.classList.add('light-on');
@@ -599,7 +680,7 @@ function tick() {
   } else if (currentMode === 3) {
     updateWorldTimeDisplay();
   } else if (currentMode === 4) {
-    // 暫定プレースホルダー
+    updateTimerDisplay();
   }
 }
 

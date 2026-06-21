@@ -299,7 +299,7 @@
       <button class="btn" onclick="pressLight()">LIGHT</button>
       <button class="btn" onclick="pressStart()">START/STOP</button>
       <button class="btn" onclick="pressMode()">MODE</button>
-      <button class="btn" onclick="pressLap()" onmousedown="startLapPress()" onmouseup="endLapPress()" ontouchstart="startLapPress()" ontouchend="endLapPress()">LAP/RESET</button>
+      <button class="btn" onclick="pressLap()" onmousedown="startLapPress()" onmouseup="endLapPress()" onmouseleave="endLapPress()" ontouchstart="startLapPress()" ontouchend="endLapPress()" ontouchcancel="endLapPress()">LAP/RESET</button>
     </div>
 
   </div>
@@ -461,6 +461,7 @@ function startLapPress() {
       tmrSetting = true;
       tmrSettingField = 0; // 分
       updateTimerDisplay();
+      lapPressTimer = null;
     }, 1000);
   }
 }
@@ -517,6 +518,7 @@ function stopTimer() {
     clearInterval(tmrInterval);
     tmrInterval = null;
   }
+  updateTimerDisplay();
 }
 
 function updateTimerTick() {
@@ -543,10 +545,28 @@ function pressLight() {
 }
 
 function pressMode() {
+  if (tmrSetting === true) {
+    tmrSetting = false;
+    lapLongPressActive = false;
+    mainH.classList.remove('blink');
+    mainM.classList.remove('blink');
+    updateTimerDisplay();
+    return;
+  }
+
   if (currentMode === 2) {
     mainH.classList.remove('blink');
     mainM.classList.remove('blink');
     alarmEditing = 0;
+  } else if (currentMode === 4) {
+    if (tmrInterval) {
+      clearInterval(tmrInterval);
+      tmrInterval = null;
+    }
+    mainH.classList.remove('blink');
+    mainM.classList.remove('blink');
+    tmrSetting = false;
+    lapLongPressActive = false;
   }
 
   currentMode = (currentMode + 1) % MODES.length;
@@ -578,6 +598,11 @@ function pressMode() {
     updateWorldTimeDisplay();
   } else if (currentMode === 4) {
     modeLabel.textContent = 'TIMER';
+    updateTimerDisplay();
+    if (tmrRunning) {
+      if (tmrInterval) clearInterval(tmrInterval);
+      tmrInterval = setInterval(updateTimerTick, 20);
+    }
   }
 }
 
@@ -599,10 +624,35 @@ function pressStart() {
   } else if (currentMode === 3) {
     currentCityIndex = (currentCityIndex + 1) % CITIES.length;
     updateWorldTimeDisplay();
+  } else if (currentMode === 4) {
+    if (tmrSetting === true) {
+      if (tmrSettingField === 0) {
+        tmrSetMin = (tmrSetMin + 1) % 100;
+      } else if (tmrSettingField === 1) {
+        tmrSetSec = (tmrSetSec + 1) % 60;
+      }
+      tmrTimeLeft = (tmrSetMin * 60 + tmrSetSec) * 1000;
+      updateTimerDisplay();
+    } else {
+      if (tmrRunning) {
+        stopTimer();
+        updateTimerDisplay();
+      } else {
+        if (tmrTimeLeft <= 0) {
+          tmrTimeLeft = (tmrSetMin * 60 + tmrSetSec) * 1000;
+        }
+        startTimer();
+      }
+    }
   }
 }
 
 function pressLap() {
+  if (lapLongPressActive === true) {
+    lapLongPressActive = false;
+    return;
+  }
+
   if (currentMode === 1) {
     if (swRunning) {
       const elapsed = swElapsed + (Date.now() - swStartTime);
@@ -628,6 +678,16 @@ function pressLap() {
   } else if (currentMode === 3) {
     currentCityIndex = (currentCityIndex - 1 + CITIES.length) % CITIES.length;
     updateWorldTimeDisplay();
+  } else if (currentMode === 4) {
+    if (tmrSetting === true) {
+      tmrSettingField = tmrSettingField === 0 ? 1 : 0;
+      updateTimerDisplay();
+    } else {
+      if (tmrRunning === false) {
+        tmrTimeLeft = (tmrSetMin * 60 + tmrSetSec) * 1000;
+      }
+      updateTimerDisplay();
+    }
   }
 }
 
@@ -673,14 +733,24 @@ function tick() {
   const now = new Date();
   checkAlarmTrigger(now.getHours(), now.getMinutes());
 
+  if (tmrRunning) {
+    const elapsed = Date.now() - tmrStartTime;
+    const timeLeft = tmrTimeLeftWhenStarted - elapsed;
+    if (timeLeft <= 0) {
+      stopTimer();
+      tmrTimeLeft = 0;
+      triggerAlarm();
+    } else {
+      tmrTimeLeft = timeLeft;
+    }
+  }
+
   if (currentMode === 0) {
     updateTime();
   } else if (currentMode === 2) {
     updateAlarmDisplay();
   } else if (currentMode === 3) {
     updateWorldTimeDisplay();
-  } else if (currentMode === 4) {
-    updateTimerDisplay();
   }
 }
 

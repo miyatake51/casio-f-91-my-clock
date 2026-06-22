@@ -310,11 +310,11 @@ const MODES = ['TIME', 'STOPWATCH', 'ALARM', 'WORLD TIME', 'TIMER'];
 let currentMode = 0;
 
 const CITIES = [
-  { code: 'TYO', offset: 9 },
-  { code: 'NYC', offset: -5 },
-  { code: 'LON', offset: 0 },
-  { code: 'PAR', offset: 1 },
-  { code: 'SYD', offset: 10 }
+  { code: 'TYO', tz: 'Asia/Tokyo' },
+  { code: 'NYC', tz: 'America/New_York' },
+  { code: 'LON', tz: 'Europe/London' },
+  { code: 'PAR', tz: 'Europe/Paris' },
+  { code: 'SYD', tz: 'Australia/Sydney' }
 ];
 let currentCityIndex = 0;
 
@@ -343,6 +343,8 @@ let alarmHour = 7;
 let alarmMinute = 0;
 let alarmEditing = 0; // 0=hour, 1=minute
 let alarmFired = false;
+let alarmRinging = false;       // 鳴動中フラグ（音・点滅の二重起動を防ぐ）
+let alarmBlinkInterval = null;  // 鳴動中の点滅タイマー（外部から確実に止められるよう保持）
 
 const lcd       = document.getElementById('lcd');
 const mainH     = document.getElementById('main-h');
@@ -383,6 +385,7 @@ function updateTime() {
 function checkAlarmTrigger(h, m) {
   if (alarmEnabled && !alarmFired) {
     if (h === alarmHour && m === alarmMinute) {
+      alarmFired = true; // 時刻アラームの多重発火防止フラグ（タイマーとは独立）
       triggerAlarm();
     }
   }
@@ -433,18 +436,25 @@ function updateAlarmDisplay() {
 function updateWorldTimeDisplay() {
   const now = new Date();
   const city = CITIES[currentCityIndex];
-  const localDate = new Date(now.getTime() + (3600000 * city.offset));
+  // IANA タイムゾーンで夏時間（DST）も自動反映する
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: city.tz,
+    hourCycle: 'h23',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    day: '2-digit', month: '2-digit'
+  }).formatToParts(now);
+  const get = (t) => parts.find((p) => p.type === t).value;
 
-  let h = localDate.getUTCHours();
-  const m = localDate.getUTCMinutes();
-  const s = localDate.getUTCSeconds();
+  const h = parseInt(get('hour'), 10);
+  const m = parseInt(get('minute'), 10);
+  const s = parseInt(get('second'), 10);
   const isPm = h >= 12;
   const h12 = h % 12 || 12;
 
   indPm.style.color = isPm ? '#1a2a15' : '#8a9a85';
   dayLabel.textContent = city.code;
-  datedisp.textContent = pad(localDate.getUTCDate());
-  topRight.textContent = pad(localDate.getUTCMonth() + 1);
+  datedisp.textContent = get('day');
+  topRight.textContent = get('month');
   lapLabel.textContent = '';
 
   mainH.textContent = pad(h12);
@@ -515,13 +525,22 @@ function startTimer() {
   tmrInterval = setInterval(updateTimerTick, 20);
 }
 
-function stopTimer() {
-  tmrRunning = false;
-  tmrTimeLeft = Math.max(0, tmrTimeLeftWhenStarted - (Date.now() - tmrStartTime));
+function _clearTimerInterval() {
   if (tmrInterval) {
     clearInterval(tmrInterval);
     tmrInterval = null;
   }
+}
+
+function stopTimer() {
+  // 停止済みなら残時間を再計算せず、インターバルだけ確実に解放する（冪等）
+  if (!tmrRunning) {
+    _clearTimerInterval();
+    return;
+  }
+  tmrRunning = false;
+  tmrTimeLeft = Math.max(0, tmrTimeLeftWhenStarted - (Date.now() - tmrStartTime));
+  _clearTimerInterval();
   if (currentMode === 4) {
     updateTimerDisplay();
   }
@@ -532,13 +551,13 @@ function updateTimerTick() {
   const timeLeft = tmrTimeLeftWhenStarted - elapsed;
 
   if (timeLeft <= 0) {
-    stopTimer();
+    stopTimer();        // この中で表示も更新される（currentMode===4 のとき）
     tmrTimeLeft = 0;
     triggerAlarm();
-  } else {
-    tmrTimeLeft = timeLeft;
+    return;             // 後続の updateTimerDisplay 二重呼び出しを避ける
   }
 
+  tmrTimeLeft = timeLeft;
   if (currentMode === 4) {
     updateTimerDisplay();
   }
@@ -560,15 +579,19 @@ function pressMode() {
     return;
   }
 
-  if (currentMode === 2) {
+  if (currentMode === 1) {
+    // STOPWATCH を離れるときは表示用インターバルを止める（計測自体は swRunning で継続）
+    if (swInterval) {
+      clearInterval(swInterval);
+      swInterval = null;
+    }
+  } else if (currentMode === 2) {
     mainH.classList.remove('blink');
     mainM.classList.remove('blink');
     alarmEditing = 0;
   } else if (currentMode === 4) {
-    if (tmrInterval) {
-      clearInterval(tmrInterval);
-      tmrInterval = null;
-    }
+    // TIMER を離れるときは計測を確実に止める（他モードでの誤発火を防ぐ）
+    stopTimer(); // 残時間計算・インターバル解放を一括で行う（停止済みでも安全）
     mainH.classList.remove('blink');
     mainM.classList.remove('blink');
     tmrSetting = false;
@@ -593,6 +616,11 @@ function pressMode() {
     topRight.textContent = '00';
     lapLabel.textContent = '';
     updateStopwatch();
+    // 計測中に戻ってきたら表示用インターバルを再開
+    if (swRunning) {
+      if (swInterval) clearInterval(swInterval);
+      swInterval = setInterval(updateStopwatch, 50);
+    }
   } else if (currentMode === 2) {
     modeLabel.textContent = 'ALARM SET';
     colon.style.animation = 'none';
@@ -605,10 +633,6 @@ function pressMode() {
   } else if (currentMode === 4) {
     modeLabel.textContent = 'TIMER';
     updateTimerDisplay();
-    if (tmrRunning) {
-      if (tmrInterval) clearInterval(tmrInterval);
-      tmrInterval = setInterval(updateTimerTick, 20);
-    }
   }
 }
 
@@ -618,6 +642,7 @@ function pressStart() {
       swElapsed += Date.now() - swStartTime;
       swRunning = false;
       clearInterval(swInterval);
+      swInterval = null;
     } else {
       swStartTime = Date.now();
       swRunning = true;
@@ -703,14 +728,30 @@ function stopStopwatch() {
     swRunning = false;
   }
   clearInterval(swInterval);
+  swInterval = null;
 }
 
 function triggerAlarm() {
-  alarmFired = true;
+  // 時刻アラーム・タイマー満了の共通の鳴動処理。alarmFired はここでは触らない（呼び出し側の責務）
+  // 鳴動中の再入を防ぐ。これにより、時刻アラームとタイマー満了が同じ秒に重なっても
+  // 音（beep）と点滅（blink）が二重に走らない。
+  if (alarmRinging) return;
+  alarmRinging = true;
+
+  // 点滅と干渉しないよう、バックライト（LIGHT）の状態を一旦リセットする
+  if (lightTimer) {
+    clearTimeout(lightTimer);
+    lightTimer = null;
+  }
+  lcd.classList.remove('light-on');
+
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
   let count = 0;
   function beep() {
-    if (count >= 8) return;
+    if (count >= 8) {
+      ctx.close().catch(() => {}); // 鳴り終えたら AudioContext を解放（リーク防止）
+      return;
+    }
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
@@ -725,12 +766,16 @@ function triggerAlarm() {
     setTimeout(beep, 300);
   }
   beep();
+
   let blinks = 0;
-  const blinkInterval = setInterval(() => {
+  if (alarmBlinkInterval) clearInterval(alarmBlinkInterval);
+  alarmBlinkInterval = setInterval(() => {
     lcd.classList.toggle('light-on');
     if (++blinks >= 16) {
-      clearInterval(blinkInterval);
+      clearInterval(alarmBlinkInterval);
+      alarmBlinkInterval = null;
       lcd.classList.remove('light-on');
+      alarmRinging = false; // 鳴動完了。次のアラームを受け付ける
     }
   }, 150);
 }
@@ -739,17 +784,7 @@ function tick() {
   const now = new Date();
   checkAlarmTrigger(now.getHours(), now.getMinutes());
 
-  if (tmrRunning) {
-    const elapsed = Date.now() - tmrStartTime;
-    const timeLeft = tmrTimeLeftWhenStarted - elapsed;
-    if (timeLeft <= 0) {
-      stopTimer();
-      tmrTimeLeft = 0;
-      triggerAlarm();
-    } else {
-      tmrTimeLeft = timeLeft;
-    }
-  }
+  // タイマーの進行・満了判定は updateTimerTick に一本化（二重発火防止）
 
   if (currentMode === 0) {
     updateTime();

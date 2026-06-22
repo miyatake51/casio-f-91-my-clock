@@ -239,6 +239,9 @@
       color: #000;
       text-align: center;
       user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none; /* iOS の長押しメニューを抑止 */
+      touch-action: none;          /* タッチのスクロール判定で長押しが途切れないように */
     }
     .btn:active {
       box-shadow: inset 2px 2px 0 rgba(0,0,0,0.5);
@@ -299,7 +302,7 @@
       <button class="btn" onclick="pressLight()">LIGHT</button>
       <button class="btn" onclick="pressStart()">START/STOP</button>
       <button class="btn" onclick="pressMode()">MODE</button>
-      <button class="btn" onclick="pressLap()" onmousedown="startLapPress()" onmouseup="endLapPress()" onmouseleave="endLapPress()" ontouchstart="startLapPress()" ontouchend="endLapPress()" ontouchcancel="endLapPress()">LAP/RESET</button>
+      <button class="btn" id="btn-lap">LAP/RESET</button>
     </div>
 
   </div>
@@ -329,6 +332,7 @@ let tmrSetting = false;
 let tmrSettingField = 0; // 0: 分, 1: 秒
 let lapPressTimer = null;
 let lapLongPressActive = false;
+let lapPressActive = false; // ポインターが押下中か（不正な pointerup を無視するため）
 
 let lightTimer = null;
 
@@ -463,11 +467,13 @@ function updateWorldTimeDisplay() {
 }
 
 function startLapPress() {
+  lapPressActive = true;
+  lapLongPressActive = false;
+  // 長押し（設定モード起動）は TIMER の待機中のみ意味を持つ
   if (currentMode === 4 && !tmrRunning && !tmrSetting) {
-    if (lapPressTimer) return; // 二重登録によるリーク防止
-    lapLongPressActive = false;
+    if (lapPressTimer) clearTimeout(lapPressTimer);
     lapPressTimer = setTimeout(() => {
-      lapLongPressActive = true;
+      lapLongPressActive = true; // 長押し成立
       tmrSetting = true;
       tmrSettingField = 0; // 分
       updateTimerDisplay();
@@ -477,14 +483,32 @@ function startLapPress() {
 }
 
 function endLapPress() {
+  if (!lapPressActive) return; // 押下していない pointerup は無視
+  lapPressActive = false;
+
+  if (lapPressTimer) {
+    // 1秒未満で離した = 通常のタップ
+    clearTimeout(lapPressTimer);
+    lapPressTimer = null;
+  }
+
+  if (lapLongPressActive) {
+    // 長押しが成立していた場合はタップ処理をしない（設定モードに入っただけ）
+    lapLongPressActive = false;
+    return;
+  }
+
+  pressLap(); // 通常のタップ動作
+}
+
+function cancelLapPress() {
+  // ボタン外への離脱・タッチ強制中断時。タップとしては扱わない
+  lapPressActive = false;
   if (lapPressTimer) {
     clearTimeout(lapPressTimer);
     lapPressTimer = null;
   }
-  // 長押し判定用フラグを、clickイベント(pressLap)が消化される十分な時間である100ms後に安全にクリアする
-  setTimeout(() => {
-    lapLongPressActive = false;
-  }, 100);
+  lapLongPressActive = false;
 }
 
 function updateTimerDisplay() {
@@ -794,6 +818,17 @@ function tick() {
     updateWorldTimeDisplay();
   }
 }
+
+// LAP/RESET ボタンはマウス・タッチ共通の Pointer Events で扱う。
+// setPointerCapture により、押下中に指が少しズレても pointerup を確実に受け取り、
+// 長押し（1秒）が途中で途切れないようにする。
+const btnLap = document.getElementById('btn-lap');
+btnLap.addEventListener('pointerdown', (e) => {
+  try { btnLap.setPointerCapture(e.pointerId); } catch (_) {}
+  startLapPress();
+});
+btnLap.addEventListener('pointerup', endLapPress);
+btnLap.addEventListener('pointercancel', cancelLapPress);
 
 setInterval(tick, 1000);
 updateTime();
